@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✿ Kawaii Calculator ✿</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ffe0ef 0%, #ffc2dd 30%, #ffb3d1 60%, #ff85b3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+  }
+
+  /* Floating hearts decoration */
+  body::before, body::after {
+    content: '♡ ✿ ♡ ✿ ♡ ✿ ♡ ✿ ♡ ✿ ♡ ✿';
+    position: fixed;
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 1.5rem;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  body::before { top: 1rem; left: -2rem; transform: rotate(-8deg); }
+  body::after  { bottom: 1rem; right: -2rem; transform: rotate(8deg); }
+
+  .calculator {
+    background: linear-gradient(160deg, #fff0f6 0%, #ffe4f0 100%);
+    border-radius: 32px;
+    padding: 24px 20px 20px;
+    width: 380px;
+    box-shadow:
+      0 20px 60px rgba(255,105,170,.35),
+      0 0 0 3px #ffb3d1,
+      0 0 0 6px rgba(255,179,209,.3);
+    position: relative;
+  }
+
+  /* Bow decoration */
+  .bow {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2.4rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(255,105,170,.4));
+    user-select: none;
+  }
+
+  .title {
+    text-align: center;
+    color: #d63384;
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    margin-top: 6px;
+    opacity: .7;
+  }
+
+  /* Display */
+  .display {
+    background: linear-gradient(135deg, #2d0a1a 0%, #1a0010 100%);
+    border-radius: 18px;
+    padding: 14px 18px 12px;
+    margin-bottom: 16px;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: inset 0 3px 10px rgba(0,0,0,.4), 0 2px 8px rgba(255,105,170,.2);
+    border: 2px solid #ff85b3;
+    position: relative;
+    overflow: hidden;
+  }
+  .display::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 20%, rgba(255,105,170,.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .expr {
+    color: #ff85b3;
+    font-size: .88rem;
+    min-height: 1.2em;
+    text-align: right;
+    word-break: break-all;
+    opacity: .8;
+    font-family: 'Courier New', monospace;
+    letter-spacing: .03em;
+  }
+
+  .result {
+    color: #ffe0ef;
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: right;
+    word-break: break-all;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 20px rgba(255,180,210,.4);
+    transition: color .15s;
+  }
+  .result.error { color: #ff6b9d; font-size: 1.2rem; }
+
+  /* Button grid */
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  button {
+    border: none;
+    border-radius: 14px;
+    padding: 0;
+    height: 54px;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+    transition: transform .09s, box-shadow .09s, filter .09s;
+    letter-spacing: .01em;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active { transform: scale(.92) translateY(2px); filter: brightness(.9); }
+
+  /* Number buttons */
+  .btn-num {
+    background: linear-gradient(160deg, #fff0f6, #ffd6ea);
+    color: #8b1a4a;
+    box-shadow: 0 4px 0 #e8a0c0, 0 6px 12px rgba(255,105,170,.15);
+    border: 1.5px solid #ffb3d1;
+  }
+  .btn-num:hover { filter: brightness(1.05); }
+
+  /* Operator buttons */
+  .btn-op {
+    background: linear-gradient(160deg, #ff85b3, #e8559a);
+    color: #fff;
+    box-shadow: 0 4px 0 #c93880, 0 6px 14px rgba(233,85,154,.35);
+    border: 1.5px solid #ff69a5;
+    font-size: .88rem;
+  }
+  .btn-op:hover { filter: brightness(1.08); }
+
+  /* Scientific buttons */
+  .btn-sci {
+    background: linear-gradient(160deg, #ffc0d9, #ffaacf);
+    color: #7a1040;
+    box-shadow: 0 4px 0 #d9789c, 0 6px 12px rgba(255,150,185,.2);
+    border: 1.5px solid #ffb3d1;
+    font-size: .75rem;
+  }
+  .btn-sci:hover { filter: brightness(1.06); }
+
+  /* Special buttons */
+  .btn-clear {
+    background: linear-gradient(160deg, #ff4d88, #e0306a);
+    color: #fff;
+    box-shadow: 0 4px 0 #b02050, 0 6px 14px rgba(224,48,106,.4);
+    border: 1.5px solid #ff6b9d;
+    font-size: .9rem;
+  }
+  .btn-clear:hover { filter: brightness(1.1); }
+
+  .btn-eq {
+    background: linear-gradient(160deg, #ff69a5, #ff3385);
+    color: #fff;
+    box-shadow: 0 4px 0 #cc0055, 0 6px 16px rgba(255,51,133,.4);
+    border: 1.5px solid #ff69a5;
+    font-size: 1.3rem;
+    grid-column: span 2;
+  }
+  .btn-eq:hover { filter: brightness(1.08); }
+
+  .btn-zero { grid-column: span 2; }
+
+  /* Tiny label (superscript-style labels) */
+  .sup { font-size: .65em; vertical-align: super; }
+</style>
+</head>
+<body>
+
+<div class="calculator">
+  <div class="bow">🎀</div>
+  <div class="title">✿ Kawaii Calculator ✿</div>
+
+  <div class="display">
+    <div class="expr" id="expr"></div>
+    <div class="result" id="result">0</div>
+  </div>
+
+  <div class="buttons" id="buttons">
+    <!-- Row 1: sci -->
+    <button class="btn-sci" data-action="sin">sin</button>
+    <button class="btn-sci" data-action="cos">cos</button>
+    <button class="btn-sci" data-action="tan">tan</button>
+    <button class="btn-sci" data-action="log">log</button>
+    <button class="btn-sci" data-action="ln">ln</button>
+
+    <!-- Row 2: sci -->
+    <button class="btn-sci" data-action="sqrt">√x</button>
+    <button class="btn-sci" data-action="sq">x²</button>
+    <button class="btn-sci" data-action="pow">x<span class="sup">y</span></button>
+    <button class="btn-sci" data-action="inv">1/x</button>
+    <button class="btn-sci" data-action="abs">|x|</button>
+
+    <!-- Row 3: sci -->
+    <button class="btn-sci" data-action="fact">n!</button>
+    <button class="btn-sci" data-action="10x">10<span class="sup">x</span></button>
+    <button class="btn-sci" data-action="pi">π</button>
+    <button class="btn-sci" data-action="e">e</button>
+    <button class="btn-sci" data-action="paren">(  )</button>
+
+    <!-- Row 4: clear row -->
+    <button class="btn-clear" data-action="ac">AC</button>
+    <button class="btn-num"  data-action="del">⌫</button>
+    <button class="btn-num"  data-action="pct">%</button>
+    <button class="btn-op"   data-action="op" data-val="÷">÷</button>
+    <button class="btn-op"   data-action="negate">±</button>
+
+    <!-- Row 5 -->
+    <button class="btn-num" data-action="digit" data-val="7">7</button>
+    <button class="btn-num" data-action="digit" data-val="8">8</button>
+    <button class="btn-num" data-action="digit" data-val="9">9</button>
+    <button class="btn-op"  data-action="op" data-val="×">×</button>
+    <button class="btn-op"  data-action="op" data-val="-">−</button>
+
+    <!-- Row 6 -->
+    <button class="btn-num" data-action="digit" data-val="4">4</button>
+    <button class="btn-num" data-action="digit" data-val="5">5</button>
+    <button class="btn-num" data-action="digit" data-val="6">6</button>
+    <button class="btn-op"  data-action="op" data-val="+">+</button>
+    <button class="btn-op"  data-action="op" data-val="-" style="visibility:hidden"></button>
+
+    <!-- Row 7 -->
+    <button class="btn-num" data-action="digit" data-val="1">1</button>
+    <button class="btn-num" data-action="digit" data-val="2">2</button>
+    <button class="btn-num" data-action="digit" data-val="3">3</button>
+    <button class="btn-eq"  data-action="eq">=</button>
+
+    <!-- Row 8 -->
+    <button class="btn-num btn-zero" data-action="digit" data-val="0">0</button>
+    <button class="btn-num" data-action="dot">.</button>
+  </div>
+</div>
+
+<script>
+  const exprEl   = document.getElementById('expr');
+  const resultEl = document.getElementById('result');
+
+  // State
+  let expr      = '';   // display expression string
+  let openParens = 0;   // track open parentheses
+  let justEvaled = false;
+
+  /* ── helpers ── */
+  function toRad(d) { return d * Math.PI / 180; }
+
+  function factorial(n) {
+    n = Math.round(n);
+    if (n < 0 || n > 170) return NaN;
+    let r = 1;
+    for (let i = 2; i <= n; i++) r *= i;
+    return r;
+  }
+
+  function safeEval(raw) {
+    // Replace display symbols with JS
+    let s = raw
+      .replace(/×/g, '*')
+      .replace(/÷/g, '/')
+      .replace(/π/g, '(Math.PI)')
+      .replace(/\be\b/g, '(Math.E)')   // standalone e
+      .replace(/sin\(/g,  'Math.sin(toRad(')
+      .replace(/cos\(/g,  'Math.cos(toRad(')
+      .replace(/tan\(/g,  'Math.tan(toRad(')
+      .replace(/log\(/g,  'Math.log10(')
+      .replace(/ln\(/g,   'Math.log(')
+      .replace(/√\(/g,    'Math.sqrt(')
+      .replace(/10\^\(/g, 'Math.pow(10,')
+      .replace(/abs\(/g,  'Math.abs(')
+      .replace(/sq\(/g,   '((')
+      .replace(/fact\(/g, 'factorial(')
+      .replace(/inv\(/g,  '(1/(');
+
+    // sq( x ) → ((x)**2)  — close with extra )
+    // handled by pairing – we just double-close below
+    // Actually: for sq/inv we added an extra open; close them at matching )
+    // Simpler: rely on the expression builder to handle closings.
+
+    // Add missing closing parens
+    let opens = (s.match(/\(/g) || []).length;
+    let closes = (s.match(/\)/g) || []).length;
+    s += ')'.repeat(Math.max(0, opens - closes));
+
+    try {
+      // eslint-disable-next-line no-new-func
+      let val = Function('Math','toRad','factorial', '"use strict"; return (' + s + ')')(Math, toRad, factorial);
+      if (typeof val !== 'number') return null;
+      return val;
+    } catch { return null; }
+  }
+
+  function formatNum(n) {
+    if (!isFinite(n)) return n > 0 ? '∞' : n < 0 ? '-∞' : 'Error';
+    if (isNaN(n)) return 'Error';
+    // Up to 10 significant digits
+    let s = parseFloat(n.toPrecision(10)).toString();
+    return s;
+  }
+
+  function updateDisplay() {
+    exprEl.textContent = expr || '';
+    if (expr === '') {
+      resultEl.textContent = '0';
+      resultEl.className = 'result';
+      return;
+    }
+    let val = safeEval(expr);
+    if (val === null) {
+      resultEl.textContent = '...';
+      resultEl.className = 'result';
+    } else {
+      resultEl.textContent = formatNum(val);
+      resultEl.className = isNaN(val) || !isFinite(val) ? 'result error' : 'result';
+    }
+  }
+
+  /* ── button actions ── */
+  function handleAction(action, val) {
+    // After evaluation, certain inputs start fresh
+    if (justEvaled) {
+      if (action === 'digit' || action === 'dot' || action === 'pi' || action === 'e') {
+        expr = '';
+        openParens = 0;
+      } else if (action === 'op') {
+        // continue with result
+      } else if (action === 'eq') {
+        justEvaled = false;
+        updateDisplay();
+        return;
+      }
+      justEvaled = false;
+    }
+
+    switch (action) {
+      case 'digit':
+        expr += val;
+        break;
+
+      case 'dot':
+        // Find last number segment, add dot only if none
+        {
+          let seg = expr.split(/[\+\-\*\/\(×÷]/).pop();
+          if (!seg.includes('.')) expr += '.';
+        }
+        break;
+
+      case 'op':
+        if (expr === '' && val !== '-') return;
+        // Replace trailing operator
+        expr = expr.replace(/[\+\-\*\/×÷]+$/, '') + val;
+        break;
+
+      case 'pct':
+        {
+          let v = safeEval(expr);
+          if (v !== null) { expr = String(v / 100); }
+        }
+        break;
+
+      case 'negate':
+        if (expr === '') { expr = '-'; break; }
+        if (expr.startsWith('(-') && expr.endsWith(')')) {
+          expr = expr.slice(2, -1);
+        } else {
+          expr = '(-' + expr + ')';
+        }
+        break;
+
+      case 'paren':
+        // Smart paren: open if last char is operator/open or empty; else close if unclosed
+        {
+          let last = expr.slice(-1);
+          if (expr === '' || /[\+\-\*\/×÷\(]/.test(last)) {
+            expr += '(';
+            openParens++;
+          } else if (openParens > 0) {
+            expr += ')';
+            openParens--;
+          } else {
+            expr += '×(';
+            openParens++;
+          }
+        }
+        break;
+
+      case 'sin': case 'cos': case 'tan':
+      case 'log': case 'ln': case 'sqrt':
+      case 'abs': case 'fact': case 'inv':
+        {
+          let fn = action === 'sqrt' ? '√' : action;
+          if (expr !== '' && !/[\+\-\*\/×÷\(]/.test(expr.slice(-1))) {
+            expr += '×';
+          }
+          expr += fn + '(';
+          openParens++;
+        }
+        break;
+
+      case 'sq':
+        if (expr === '') return;
+        expr = 'sq(' + expr + ')';
+        break;
+
+      case '10x':
+        if (expr !== '' && !/[\+\-\*\/×÷\(]/.test(expr.slice(-1))) expr += '×';
+        expr += '10^(';
+        openParens++;
+        break;
+
+      case 'pow':
+        expr += '^';
+        // We convert ^ to ** via eval replacement
+        expr = expr.replace(/\^/, '**');
+        // Actually just use ** directly in safeEval — but our safeEval doesn't handle ^
+        // Let's append ** instead
+        expr = expr.slice(0, -2);
+        expr += '**';
+        break;
+
+      case 'pi':
+        if (expr !== '' && /[\d\)]/.test(expr.slice(-1))) expr += '×';
+        expr += 'π';
+        break;
+
+      case 'e':
+        if (expr !== '' && /[\d\)]/.test(expr.slice(-1))) expr += '×';
+        expr += 'e';
+        break;
+
+      case 'del':
+        if (expr === '') return;
+        // Remove last "token" (function name or single char)
+        {
+          const fns = ['sin(','cos(','tan(','log(','ln(','√(','abs(','fact(','inv(','10^(','sq('];
+          let removed = false;
+          for (let fn of fns) {
+            if (expr.endsWith(fn)) {
+              expr = expr.slice(0, -fn.length);
+              openParens--;
+              removed = true;
+              break;
+            }
+          }
+          if (!removed) {
+            let last = expr.slice(-1);
+            if (last === '(') openParens--;
+            if (last === ')') openParens++;
+            expr = expr.slice(0, -1);
+          }
+        }
+        break;
+
+      case 'ac':
+        expr = '';
+        openParens = 0;
+        justEvaled = false;
+        break;
+
+      case 'eq':
+        {
+          let val2 = safeEval(expr);
+          if (val2 === null) return;
+          let fmt = formatNum(val2);
+          exprEl.textContent = expr + ' =';
+          expr = fmt === 'Error' || fmt === '∞' || fmt === '-∞' ? '' : fmt;
+          openParens = 0;
+          resultEl.textContent = fmt;
+          resultEl.className = (fmt === 'Error' || isNaN(parseFloat(fmt))) ? 'result error' : 'result';
+          justEvaled = true;
+          return;
+        }
+    }
+
+    updateDisplay();
+  }
+
+  /* ── click events ── */
+  document.getElementById('buttons').addEventListener('click', e => {
+    let btn = e.target.closest('button');
+    if (!btn) return;
+    let action = btn.dataset.action;
+    let val    = btn.dataset.val;
+    handleAction(action, val);
+  });
+
+  /* ── keyboard support ── */
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key;
+
+    if (k >= '0' && k <= '9') { e.preventDefault(); handleAction('digit', k); }
+    else if (k === '.') { e.preventDefault(); handleAction('dot'); }
+    else if (k === '+') { e.preventDefault(); handleAction('op', '+'); }
+    else if (k === '-') { e.preventDefault(); handleAction('op', '-'); }
+    else if (k === '*') { e.preventDefault(); handleAction('op', '×'); }
+    else if (k === '/') { e.preventDefault(); handleAction('op', '÷'); }
+    else if (k === '%') { e.preventDefault(); handleAction('pct'); }
+    else if (k === '(') { e.preventDefault(); expr += '('; openParens++; updateDisplay(); }
+    else if (k === ')') { e.preventDefault(); if (openParens > 0) { expr += ')'; openParens--; updateDisplay(); } }
+    else if (k === 'Enter' || k === '=') { e.preventDefault(); handleAction('eq'); }
+    else if (k === 'Backspace') { e.preventDefault(); handleAction('del'); }
+    else if (k === 'Escape') { e.preventDefault(); handleAction('ac'); }
+    else if (k === 'p') { e.preventDefault(); handleAction('pi'); }
+    else if (k === 'e') { e.preventDefault(); handleAction('e'); }
+    else if (k === 's') { e.preventDefault(); handleAction('sin'); }
+    else if (k === 'c') { e.preventDefault(); handleAction('cos'); }
+    else if (k === 't') { e.preventDefault(); handleAction('tan'); }
+    else if (k === 'l') { e.preventDefault(); handleAction('log'); }
+    else if (k === 'n') { e.preventDefault(); handleAction('ln'); }
+    else if (k === 'q') { e.preventDefault(); handleAction('sqrt'); }
+  });
+
+  updateDisplay();
+</script>
+</body>
+</html>
